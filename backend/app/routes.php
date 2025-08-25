@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Application\Actions\Bus\ListBusesByRouteAction;
 use App\Application\Actions\User\ListUsersAction;
 use App\Application\Actions\User\ViewUserAction;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -23,5 +24,9 @@ return function (App $app) {
     $app->group('/users', function (Group $group) {
         $group->get('', ListUsersAction::class);
         $group->get('/{id}', ViewUserAction::class);
+    });
+
+    $app->group('/api', function (Group $group) {
+        $group->get('/routes/{route_id}/buses', ListBusesByRouteAction::class);
     });
 };

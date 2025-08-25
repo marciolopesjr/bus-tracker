@@ -26,5 +26,13 @@ return function (ContainerBuilder $containerBuilder) {
 
             return $logger;
         },
+        PDO::class => function (ContainerInterface $c) {
+            $settings = $c->get(SettingsInterface::class);
+            $dbSettings = $settings->get('db');
+            $db = new PDO($dbSettings['dsn']);
+            $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            return $db;
+        }
     ]);
 };
