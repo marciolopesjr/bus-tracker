@@ -6,7 +6,7 @@ namespace App\Application\Actions\Bus;
 
 use App\Application\Actions\Action;
 use Psr\Http\Message\ResponseInterface as Response;
-use Psr/Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 use \PDO;
 
 class ListBusesByRouteAction extends Action
