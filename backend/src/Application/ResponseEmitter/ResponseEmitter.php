@@ -22,7 +22,8 @@ class ResponseEmitter extends SlimResponseEmitter
             ->withHeader('Access-Control-Allow-Origin', $allowedOrigin)
             ->withHeader(
                 'Access-Control-Allow-Headers',
-                'X-Requested-With, Content-Type, Accept, Origin, Authorization',
+                // THE FIX IS HERE: Added X-Api-Key to the list of allowed headers.
+                'X-Requested-With, Content-Type, Accept, Origin, Authorization, X-Api-Key'
             )
             ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
             ->withHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')

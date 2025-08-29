@@ -1,3 +1,5 @@
+// src/pages/LoginPage.jsx
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
@@ -12,7 +14,7 @@ const LoginPage = () => {
     e.preventDefault();
     const success = await login(username, password);
     if (success) {
-      navigate('/admin/buses'); // Redirect to admin panel on successful login
+      navigate('/admin/buses'); // Redireciona para o painel de admin em caso de sucesso
     }
   };
 
@@ -21,13 +23,13 @@ const LoginPage = () => {
       <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-lg">
         <div>
           <h2 className="text-3xl font-extrabold text-center text-white">
-            Operator Panel Login
+            Login do Painel do Operador
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label htmlFor="username" className="sr-only">Username</label>
+              <label htmlFor="username" className="sr-only">Usuário</label>
               <input
                 id="username"
                 name="username"
@@ -35,13 +37,13 @@ const LoginPage = () => {
                 autoComplete="username"
                 required
                 className="relative block w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded-md appearance-none placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Username"
+                placeholder="Usuário"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div>
-              <label htmlFor="password-input" className="sr-only">Password</label>
+              <label htmlFor="password-input" className="sr-only">Senha</label>
               <input
                 id="password-input"
                 name="password"
@@ -49,7 +51,7 @@ const LoginPage = () => {
                 autoComplete="current-password"
                 required
                 className="relative block w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded-md appearance-none placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder="Password"
+                placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -64,7 +66,7 @@ const LoginPage = () => {
               disabled={isLoading}
               className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md group hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
         </form>

@@ -1,33 +1,42 @@
+import PropTypes from 'prop-types';
 import useBusStore from '../store/busStore';
 
 const BusListItem = ({ bus }) => {
-  const { selectedBusId, setSelectedBusId } = useBusStore();
+  // Aplicando o mesmo padrão de seletor atômico
+  const selectedBusId = useBusStore((state) => state.selectedBusId);
+  const setSelectedBusId = useBusStore((state) => state.setSelectedBusId);
+  
   const isSelected = bus.id === selectedBusId;
 
   const handleClick = () => {
-    // Alterna a seleção ou seleciona se não estiver selecionado
     setSelectedBusId(isSelected ? null : bus.id);
   };
 
   return (
     <li
-      className={`px-4 py-3 cursor-pointer border-l-4 ${
+      className={`px-4 py-3 cursor-pointer transition-colors duration-200 ${
         isSelected
-          ? 'bg-blue-900/50 border-blue-500'
-          : 'border-transparent hover:bg-gray-700/50'
+          ? 'bg-blue-500/30'
+          : 'hover:bg-gray-700/50'
       }`}
       onClick={handleClick}
     >
       <div className="flex items-center justify-between">
-        <span className="font-semibold">{bus.license_plate}</span>
-        <span className={`text-xs px-2 py-1 rounded-full ${
-          isSelected ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-300'
-        }`}>
-          ID: {bus.id}
-        </span>
+        <div>
+            <span className="font-semibold text-white">{bus.license_plate}</span>
+            <p className="text-xs text-gray-400">ID: {bus.id}</p>
+        </div>
       </div>
     </li>
   );
 };
+
+BusListItem.propTypes = {
+    bus: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        license_plate: PropTypes.string.isRequired,
+    }).isRequired,
+};
+
 
 export default BusListItem;

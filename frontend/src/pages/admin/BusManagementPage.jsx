@@ -1,10 +1,12 @@
+// src/pages/admin/BusManagementPage.jsx
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../apiClient';
 import { useState } from 'react';
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 
-// This could be its own component file, but is simple enough to be here for now.
+// Este poderia ser seu próprio arquivo de componente, mas é simples o suficiente para ficar aqui por enquanto.
 const BusForm = ({ bus, onSave, onCancel }) => {
   const [licensePlate, setLicensePlate] = useState(bus ? bus.license_plate : '');
 
@@ -17,22 +19,22 @@ const BusForm = ({ bus, onSave, onCancel }) => {
 
   return (
     <form onSubmit={handleSubmit} className="p-4 mt-4 mb-6 bg-gray-700 rounded-lg">
-      <h3 className="mb-2 text-lg font-semibold">{bus ? 'Edit Bus' : 'Create New Bus'}</h3>
+      <h3 className="mb-2 text-lg font-semibold">{bus ? 'Editar Ônibus' : 'Criar Novo Ônibus'}</h3>
       <div className="flex items-center gap-4">
         <input
           type="text"
           value={licensePlate}
           onChange={(e) => setLicensePlate(e.target.value)}
-          placeholder="e.g., BUS-123"
+          placeholder="ex: ABC-1234"
           required
           className="flex-grow px-3 py-2 text-white bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         />
         <div className="flex gap-2">
           <button type="submit" className="px-4 py-2 font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700">
-            Save
+            Salvar
           </button>
           <button type="button" onClick={onCancel} className="px-4 py-2 font-bold text-white bg-gray-500 rounded-md hover:bg-gray-600">
-            Cancel
+            Cancelar
           </button>
         </div>
       </div>
@@ -52,7 +54,7 @@ BusForm.propTypes = {
 
 const BusManagementPage = () => {
   const queryClient = useQueryClient();
-  const [editingBus, setEditingBus] = useState(null); // null, 'new', or a bus object
+  const [editingBus, setEditingBus] = useState(null); // null, 'new', ou um objeto bus
   
   // --- React Query Hooks ---
 
@@ -61,18 +63,15 @@ const BusManagementPage = () => {
     queryFn: async () => {
       const response = await apiClient.get('/api/admin/buses');
       
-      // THE FIX IS HERE: The admin endpoint is also wrapping the array in a 'data' property,
-      // contrary to the OpenAPI spec. We now correctly access `response.data.data`.
       if (response.data && Array.isArray(response.data.data)) {
         return response.data.data;
       }
       
-      // Fallback for if the API ever returns a direct array (to match the spec).
       if (Array.isArray(response.data)) {
         return response.data;
       }
 
-      console.error("Unexpected API response structure for admin bus list.", response.data);
+      console.error("Estrutura de resposta da API inesperada para a lista de ônibus do admin.", response.data);
       return [];
     },
     retry: (failureCount, error) => {
@@ -107,15 +106,15 @@ const BusManagementPage = () => {
   // --- Event Handlers ---
 
   const handleSaveBus = (busData) => {
-    if (editingBus && editingBus.id) { // Editing existing bus
+    if (editingBus && editingBus.id) { // Editando ônibus existente
       updateBusMutation.mutate({ ...busData, id: editingBus.id });
-    } else { // Creating new bus
+    } else { // Criando novo ônibus
       createBusMutation.mutate(busData);
     }
   };
 
   const handleDeleteBus = (busId) => {
-    if (window.confirm('Are you sure you want to delete this bus?')) {
+    if (window.confirm('Você tem certeza que deseja excluir este ônibus?')) {
       deleteBusMutation.mutate(busId);
     }
   };
@@ -123,17 +122,17 @@ const BusManagementPage = () => {
 
   // --- Render Logic ---
 
-  if (isLoading) return <div className="p-8 text-center">Loading bus fleet...</div>;
-  if (isError) return <div className="p-8 text-center text-red-400">Error: {error.response?.data?.error?.description || error.message}</div>;
+  if (isLoading) return <div className="p-8 text-center">Carregando a frota de ônibus...</div>;
+  if (isError) return <div className="p-8 text-center text-red-400">Erro: {error.response?.data?.error?.description || error.message}</div>;
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Bus Fleet Management</h1>
+        <h1 className="text-3xl font-bold">Gerenciamento da Frota</h1>
         {editingBus === null && (
            <button onClick={() => setEditingBus('new')} className="flex items-center gap-2 px-4 py-2 font-bold text-white bg-green-600 rounded-md hover:bg-green-700">
             <FaPlus />
-            Add New Bus
+            Adicionar Novo Ônibus
           </button>
         )}
       </div>
@@ -151,8 +150,8 @@ const BusManagementPage = () => {
           <thead className="text-xs text-gray-100 uppercase bg-gray-700">
             <tr>
               <th scope="col" className="px-6 py-3">ID</th>
-              <th scope="col" className="px-6 py-3">License Plate</th>
-              <th scope="col" className="px-6 py-3 text-right">Actions</th>
+              <th scope="col" className="px-6 py-3">Placa</th>
+              <th scope="col" className="px-6 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody>

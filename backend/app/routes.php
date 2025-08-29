@@ -1,23 +1,16 @@
 <?php
 declare(strict_types=1);
 
-// ... (todos os outros 'use' statements)
 use App\Application\Middleware\ApiKeyMiddleware;
 use App\Application\Actions\Ingestion\UpdateBusLocationAction;
-// ... (resto dos 'use' statements)
-
-// Import Auth Actions
 use App\Application\Actions\Auth\LoginAction;
 use App\Application\Actions\Auth\LogoutAction;
-// Import Public Actions
 use App\Application\Actions\Bus\ListBusesByRouteAction;
-// Import Admin Bus Actions
 use App\Application\Actions\Admin\Bus\ListBusesAction;
 use App\Application\Actions\Admin\Bus\ViewBusAction;
 use App\Application\Actions\Admin\Bus\CreateBusAction;
 use App\Application\Actions\Admin\Bus\UpdateBusAction;
 use App\Application\Actions\Admin\Bus\DeleteBusAction;
-// Import Admin Route Actions
 use App\Application\Actions\Admin\Route\ListRoutesAction;
 use App\Application\Actions\Admin\Route\ViewRouteAction;
 use App\Application\Actions\Admin\Route\CreateRouteAction;
@@ -25,9 +18,7 @@ use App\Application\Actions\Admin\Route\UpdateRouteAction;
 use App\Application\Actions\Admin\Route\DeleteRouteAction;
 use App\Application\Actions\Admin\Route\AssignBusToRouteAction;
 use App\Application\Actions\Admin\Route\UnassignBusFromRouteAction;
-// Import Middleware
 use App\Application\Middleware\AuthMiddleware;
-
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -48,7 +39,7 @@ return function (App $app) {
         $group->get('/routes/{route_id}/buses', ListBusesByRouteAction::class);
 
         // Service endpoint for buses to report their location
-        $group->put('/buses/{id:[0-9]+}/location', UpdateBusLocationAction::class)
+        $group->post('/buses/{id:[0-9]+}/location', UpdateBusLocationAction::class)
               ->add(ApiKeyMiddleware::class); // Protected by our new bouncer
     });
 
@@ -60,10 +51,10 @@ return function (App $app) {
 
     // Admin/Operator group
     $app->group('/api/admin', function (Group $group) {
-        // ... (all admin routes remain the same)
         $group->group('/buses', function (Group $busGroup) {
             $busGroup->get('', ListBusesAction::class);
             $busGroup->post('', CreateBusAction::class);
+            // THE FIX IS HERE: Corrected the regex from the alien artifact to the proper [0-9]+
             $busGroup->get('/{id:[0-9]+}', ViewBusAction::class);
             $busGroup->put('/{id:[0-9]+}', UpdateBusAction::class);
             $busGroup->delete('/{id:[0-9]+}', DeleteBusAction::class);

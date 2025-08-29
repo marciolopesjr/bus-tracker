@@ -1,20 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import useBusStore from '../store/busStore';
 
 const WEBSOCKET_URL = 'ws://localhost:8090';
 
 /**
  * Custom hook to manage the WebSocket connection for real-time bus position updates.
- * It connects on mount and disconnects on unmount, updating the global busStore
- * whenever a 'positions_update' message is received.
+ * Delegates state update logic to the busStore via the `addOrUpdateBus` action.
  */
 const useBusSocket = () => {
-  // Get the state setter function directly from our Zustand store.
-  const setBuses = useBusStore((state) => state.setBuses);
+  // Seleciona apenas a ação necessária do store.
+  // Esta referência é estável e não causará re-renderizações ou loops.
+  const addOrUpdateBus = useBusStore((state) => state.addOrUpdateBus);
+  const socketRef = useRef(null);
 
   useEffect(() => {
+    if (socketRef.current) {
+      return;
+    }
+    
     console.log('Attempting to connect to WebSocket server...');
     const socket = new WebSocket(WEBSOCKET_URL);
+    socketRef.current = socket;
 
     socket.onopen = () => {
       console.log('WebSocket connection established successfully.');
@@ -24,11 +30,10 @@ const useBusSocket = () => {
       try {
         const data = JSON.parse(event.data);
 
-        // Handle incoming messages based on their type.
-        if (data.type === 'positions_update' && Array.isArray(data.payload)) {
-          // As per the new architecture, we replace the entire list of buses
-          // with the fresh data from the payload.
-          setBuses(data.payload);
+        // A lógica agora é muito mais simples aqui
+        if (data.type === 'position_update' && typeof data.payload === 'object' && data.payload !== null) {
+          // Apenas chamamos a ação do store, que sabe como lidar com a atualização.
+          addOrUpdateBus(data.payload);
         } else {
           console.warn('Received unknown message type or invalid payload:', data);
         }
@@ -45,18 +50,20 @@ const useBusSocket = () => {
       if (event.wasClean) {
         console.log(`WebSocket connection closed cleanly, code=${event.code}, reason=${event.reason}`);
       } else {
-        // e.g. server process killed or network down
         console.error('WebSocket connection died');
       }
+      socketRef.current = null; 
     };
 
-    // Cleanup function: This is crucial to prevent memory leaks and
-    // multiple connections when the component unmounts.
     return () => {
-      console.log('Closing WebSocket connection.');
-      socket.close();
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        console.log('Closing WebSocket connection.');
+        socketRef.current.close();
+      }
+      socketRef.current = null;
     };
-  }, [setBuses]); // useEffect depends on setBuses to conform to linting rules.
+    
+  }, [addOrUpdateBus]); // A dependência de 'addOrUpdateBus' também é estável.
 };
 
 export default useBusSocket;

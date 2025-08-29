@@ -1,3 +1,5 @@
+// src/components/BusMap.jsx
+
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useQuery } from '@tanstack/react-query';
@@ -6,7 +8,6 @@ import BusMarker from './BusMarker';
 
 // --- Configuration ---
 const API_URL = 'http://localhost:8069/api/routes/1/buses'; 
-// REFETCH_INTERVAL_MS is no longer needed with WebSockets
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // --- Map Constants ---
@@ -43,7 +44,12 @@ const loadGoogleMapsScript = (callback) => {
 
 // --- The React Component ---
 const BusMap = () => {
-  const { buses, setBuses, selectedBusId, setSelectedBusId } = useBusStore();
+  // Aplicando o padrão de seletor atômico
+  const buses = useBusStore((state) => state.buses);
+  const setBuses = useBusStore((state) => state.setBuses);
+  const selectedBusId = useBusStore((state) => state.selectedBusId);
+  const setSelectedBusId = useBusStore((state) => state.setSelectedBusId);
+
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef(new Map());
@@ -53,7 +59,7 @@ const BusMap = () => {
     queryKey: ['buses'],
     queryFn: async () => {
       const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Network response was not ok');
+      if (!res.ok) throw new Error('A resposta da rede não foi bem-sucedida');
       const payload = await res.json();
       
       if (payload && Array.isArray(payload.data)) {
@@ -65,22 +71,17 @@ const BusMap = () => {
         }));
       }
 
-      console.error("Unexpected API response structure for public bus route.", payload);
+      console.error("Estrutura de resposta da API inesperada para a rota de ônibus pública.", payload);
       return [];
     },
-    // THE CHANGE IS HERE: refetchInterval has been removed.
-    // This query now runs only once to get the initial state.
   });
 
   useEffect(() => {
-    // This effect ensures the initial state from the HTTP fetch is loaded into the store.
-    // Subsequent updates will come from the WebSocket via useBusSocket.
     if (fetchedBuses) {
       setBuses(fetchedBuses);
     }
   }, [fetchedBuses, setBuses]);
 
-  // Effect for Initializing the Map
   useEffect(() => {
     loadGoogleMapsScript(() => {
       if (mapContainerRef.current && !mapRef.current) {
@@ -94,7 +95,6 @@ const BusMap = () => {
     });
   }, [setSelectedBusId]);
 
-  // Effect for Syncing Markers with Bus Data
   useEffect(() => {
     if (!mapRef.current || !buses) return; 
 
@@ -120,7 +120,7 @@ const BusMap = () => {
         const marker = new window.google.maps.marker.AdvancedMarkerElement({
           position: pos,
           map: mapRef.current,
-          title: `Bus ${bus.license_plate}`,
+          title: `Ônibus ${bus.license_plate}`,
           content: markerNode,
         });
 
@@ -130,7 +130,6 @@ const BusMap = () => {
     });
   }, [buses, setSelectedBusId]);
 
-  // Effect for Handling Selection (Info Window and Marker Style)
   useEffect(() => {
     markersRef.current.forEach((markerData, busId) => {
       markerData.root.render(<BusMarker isSelected={busId === selectedBusId} />);
@@ -142,7 +141,7 @@ const BusMap = () => {
     if (selectedBus) {
       const markerData = markersRef.current.get(selectedBus.id);
       if (markerData) {
-        const content = `<div class="text-gray-900"><h4 class="font-bold">Bus: ${selectedBus.license_plate}</h4><p>ID: ${selectedBus.id}</p></div>`;
+        const content = `<div class="text-gray-900"><h4 class="font-bold">Ônibus: ${selectedBus.license_plate}</h4><p>ID: ${selectedBus.id}</p></div>`;
         infoWindowRef.current.setContent(content);
         infoWindowRef.current.open({ anchor: markerData.marker, map: mapRef.current });
         mapRef.current.panTo(markerData.marker.position);
@@ -152,7 +151,7 @@ const BusMap = () => {
     }
   }, [selectedBusId, buses]);
 
-  if (isError) return <div className="flex items-center justify-center h-full bg-red-900 text-white">Error: {error.message}</div>;
+  if (isError) return <div className="flex items-center justify-center h-full bg-red-900 text-white">Erro: {error.message}</div>;
 
   return <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />;
 };

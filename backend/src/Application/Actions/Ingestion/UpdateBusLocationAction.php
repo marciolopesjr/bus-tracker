@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Application\Actions\Ingestion;
 
 use App\Application\Actions\Action;
-use App\Application\WebSocket\WebSocketPusher; // Import the pusher
+use App\Application\WebSocket\WebSocketPusher;
 use App\Domain\Bus\BusRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Exception\HttpBadRequestException;
@@ -15,7 +15,7 @@ class UpdateBusLocationAction extends Action
     public function __construct(
         \Psr\Log\LoggerInterface $logger,
         private BusRepository $busRepository,
-        private WebSocketPusher $pusher // Inject the pusher
+        private WebSocketPusher $pusher
     ) {
         parent::__construct($logger);
     }
@@ -32,6 +32,7 @@ class UpdateBusLocationAction extends Action
             throw new HttpBadRequestException($this->request, 'Fields `lat` and `lng` are required and must be numeric.');
         }
 
+        // The repository now handles updating the timestamp automatically
         $updatedBus = $this->busRepository->updateLocation($busId, (float)$lat, (float)$lng);
 
         if (!$updatedBus) {

@@ -18,7 +18,8 @@ $db->exec('CREATE TABLE buses (
     id INTEGER PRIMARY KEY,
     license_plate TEXT NOT NULL,
     current_lat REAL,
-    current_lng REAL
+    current_lng REAL,
+    last_seen_at DATETIME
 )');
 
 $db->exec('CREATE TABLE bus_routes (
@@ -39,19 +40,22 @@ $db->exec('CREATE TABLE users (
 
 // --- Seed Data ---
 $routes = [
-    ['id' => 1, 'name' => 'Route A'],
-    ['id' => 2, 'name' => 'Route B'],
+    ['id' => 1, 'name' => 'Route Beira-Mar'],
+    ['id' => 2, 'name' => 'Route Centro-Ponte'],
 ];
 
+// THE FIX IS HERE: New coordinates for Tramandaí, RS
 $buses = [
-    ['id' => 1, 'license_plate' => 'BUS-001', 'current_lat' => -23.5505, 'current_lng' => -46.6333],
-    ['id' => 2, 'license_plate' => 'BUS-002', 'current_lat' => -23.5515, 'current_lng' => -46.6343],
-    ['id' => 3, 'license_plate' => 'BUS-003', 'current_lat' => -23.5525, 'current_lng' => -46.6353],
-    ['id' => 4, 'license_plate' => 'BUS-004', 'current_lat' => -23.5495, 'current_lng' => -46.6323],
-    ['id' => 5, 'license_plate' => 'BUS-005', 'current_lat' => -23.5580, 'current_lng' => -46.6400],
-    ['id' => 6, 'license_plate' => 'BUS-006', 'current_lat' => -23.5590, 'current_lng' => -46.6410],
-    ['id' => 7, 'license_plate' => 'BUS-007', 'current_lat' => -23.5600, 'current_lng' => -46.6420],
-    ['id' => 8, 'license_plate' => 'BUS-008', 'current_lat' => -23.5610, 'current_lng' => -46.6430],
+    // Route Beira-Mar
+    ['id' => 1, 'license_plate' => 'BUS-001', 'current_lat' => -29.9876, 'current_lng' => -50.1264], // Near Plataforma de Pesca
+    ['id' => 2, 'license_plate' => 'BUS-002', 'current_lat' => -29.9831, 'current_lng' => -50.1225], // Av. Beira Mar North
+    ['id' => 3, 'license_plate' => 'BUS-003', 'current_lat' => -29.9928, 'current_lng' => -50.1310], // Av. Beira Mar South
+    ['id' => 4, 'license_plate' => 'BUS-004', 'current_lat' => -29.9855, 'current_lng' => -50.1245], // Near Av. da Igreja
+    // Route Centro-Ponte
+    ['id' => 5, 'license_plate' => 'BUS-005', 'current_lat' => -29.9880, 'current_lng' => -50.1343], // Downtown / Centro
+    ['id' => 6, 'license_plate' => 'BUS-006', 'current_lat' => -29.9904, 'current_lng' => -50.1415], // Near Ponte Giuseppe Garibaldi
+    ['id' => 7, 'license_plate' => 'BUS-007', 'current_lat' => -29.9842, 'current_lng' => -50.1329], // Near Prefeitura
+    ['id' => 8, 'license_plate' => 'BUS-008', 'current_lat' => -29.9925, 'current_lng' => -50.1388], // Near Lagoa do Armazém
 ];
 
 $bus_routes = [
@@ -76,4 +80,4 @@ foreach ($buses as $bus) { $db->prepare('INSERT INTO buses (id, license_plate, c
 foreach ($bus_routes as $bus_route) { $db->prepare('INSERT INTO bus_routes (bus_id, route_id) VALUES (:bus_id, :route_id)')->execute($bus_route); }
 foreach ($users as $user) { $db->prepare('INSERT INTO users (id, username, first_name, last_name, password) VALUES (:id, :username, :first_name, :last_name, :password)')->execute($user); }
 
-echo "Database setup complete with 8 buses and 1 admin user.\n";
+echo "Database setup complete with 8 buses in Tramandaí and 1 admin user.\n";

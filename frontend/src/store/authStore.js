@@ -1,3 +1,5 @@
+// src/store/authStore.js
+
 import { create } from 'zustand';
 import apiClient from '../apiClient';
 
@@ -16,24 +18,24 @@ const useAuthStore = create((set) => ({
         isAuthenticated: true, 
         isLoading: false 
       });
-      return true; // Indicate success
+      return true; // Indica sucesso
     } catch (err) {
-      const errorMessage = err.response?.data?.error?.description || 'Login failed. Please check your credentials.';
+      const errorMessage = err.response?.data?.error?.description || 'Falha no login. Verifique suas credenciais.';
       set({ 
         error: errorMessage, 
         isAuthenticated: false, 
         user: null, 
         isLoading: false 
       });
-      return false; // Indicate failure
+      return false; // Indica falha
     }
   },
 
   logout: () => {
-    // In a session-based auth, we can't directly "destroy" the server session
-    // from the client. The best practice is to clear the client-side state
-    // and let the cookie expire on its own or have a `/logout` endpoint.
-    // For now, we'll just clear the client state.
+    // Em uma autenticação baseada em sessão, não podemos "destruir" a sessão do servidor
+    // diretamente do cliente. A melhor prática é limpar o estado do lado do cliente
+    // e deixar o cookie expirar por conta própria ou ter um endpoint `/logout`.
+    // Por enquanto, vamos apenas limpar o estado do cliente.
     set({ user: null, isAuthenticated: false, error: null });
   },
 }));

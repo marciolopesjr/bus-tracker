@@ -48,16 +48,28 @@ frontend/package.json
 frontend/postcss.config.js
 frontend/public/vite.svg
 frontend/README.md
+frontend/src/apiClient.js
 frontend/src/App.css
 frontend/src/App.jsx
 frontend/src/assets/react.svg
+frontend/src/components/AdminLayout.jsx
+frontend/src/components/AppShell.jsx
+frontend/src/components/BottomNavBar.jsx
+frontend/src/components/BusInfoPanel.jsx
 frontend/src/components/BusListItem.jsx
 frontend/src/components/BusMap.jsx
 frontend/src/components/BusMarker.jsx
+frontend/src/components/ProtectedRoute.jsx
 frontend/src/components/Sidebar.jsx
 frontend/src/hooks/useBusSocket.js
 frontend/src/index.css
 frontend/src/main.jsx
+frontend/src/pages/admin/BusManagementPage.jsx
+frontend/src/pages/ContactPage.jsx
+frontend/src/pages/LoginPage.jsx
+frontend/src/pages/RoutesPage.jsx
+frontend/src/pages/TrackerPage.jsx
+frontend/src/store/authStore.js
 frontend/src/store/busStore.js
 frontend/tailwind.config.js
 frontend/vite.config.js
@@ -66,134 +78,175 @@ frontend/vite.config.js
 <files>
 This section contains the contents of the repository's files.
 
-<file path="frontend/postcss.config.js">
-export default {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-</file>
+<file path="frontend/src/components/AppShell.jsx">
+import { Outlet } from 'react-router-dom';
+import BottomNavBar from './BottomNavBar';
 
-<file path="frontend/src/components/BusListItem.jsx">
-import useBusStore from '../store/busStore';
-
-const BusListItem = ({ bus }) => {
-  const { selectedBusId, setSelectedBusId } = useBusStore();
-  const isSelected = bus.id === selectedBusId;
-
-  const handleClick = () => {
-    // Alterna a seleção ou seleciona se não estiver selecionado
-    setSelectedBusId(isSelected ? null : bus.id);
-  };
-
+const AppShell = () => {
   return (
-    <li
-      className={`px-4 py-3 cursor-pointer border-l-4 ${
-        isSelected
-          ? 'bg-blue-900/50 border-blue-500'
-          : 'border-transparent hover:bg-gray-700/50'
-      }`}
-      onClick={handleClick}
-    >
-      <div className="flex items-center justify-between">
-        <span className="font-semibold">{bus.license_plate}</span>
-        <span className={`text-xs px-2 py-1 rounded-full ${
-          isSelected ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-300'
-        }`}>
-          ID: {bus.id}
-        </span>
-      </div>
-    </li>
-  );
-};
-
-export default BusListItem;
-</file>
-
-<file path="frontend/src/components/BusMarker.jsx">
-import { FaBus } from 'react-icons/fa';
-
-const BusMarker = ({ isSelected }) => {
-  // We use Tailwind CSS classes to change the appearance based on the `isSelected` prop.
-  // This provides clear visual feedback to the user.
-  const baseClasses = "transition-all duration-200 ease-in-out transform";
-  const selectedClasses = "text-blue-500 scale-125";
-  const deselectedClasses = "text-gray-900";
-
-  return (
-    <div className="p-1 bg-white rounded-full shadow-lg">
-      <FaBus 
-        size={24}
-        className={`${baseClasses} ${isSelected ? selectedClasses : deselectedClasses}`}
-      />
+    <div className="h-screen w-screen bg-gray-900 flex flex-col font-sans overflow-hidden">
+      <main className="flex-1 relative">
+        {/* As páginas (TrackerPage, RoutesPage, etc.) serão renderizadas aqui */}
+        <Outlet />
+      </main>
+      
+      {/* A barra de navegação fica na parte inferior, sobrepondo a 'main' */}
+      <BottomNavBar />
     </div>
   );
 };
 
-export default BusMarker;
+export default AppShell;
 </file>
 
-<file path="frontend/src/components/Sidebar.jsx">
-import useBusStore from '../store/busStore';
-import BusListItem from './BusListItem';
+<file path="frontend/src/components/BottomNavBar.jsx">
+import { NavLink } from 'react-router-dom';
+import { FaMapMarkedAlt, FaRoute, FaInfoCircle } from 'react-icons/fa';
 
-const Sidebar = () => {
-  const buses = useBusStore((state) => state.buses);
+const BottomNavBar = () => {
+  const navLinkClasses = ({ isActive }) =>
+    `flex flex-col items-center justify-center flex-1 transition-colors duration-200 ${
+      isActive ? 'text-blue-400' : 'text-gray-400 hover:text-white'
+    }`;
 
   return (
-    <aside className="w-80 flex-shrink-0 bg-gray-800 flex flex-col">
-      <header className="p-4 border-b border-gray-700">
-        <h1 className="text-xl font-bold">Bus Fleet Tracker</h1>
-        <p className="text-sm text-gray-400">Real-time monitoring</p>
-      </header>
-      
-      <div className="p-4">
-        <label htmlFor="route-select" className="block text-sm font-medium text-gray-300 mb-2">
-          Route
-        </label>
-        <select 
-          id="route-select" 
-          className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option>Route A</option>
-          {/* Outras rotas podem ser adicionadas aqui no futuro */}
-        </select>
-      </div>
+    <nav className="w-full h-16 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 flex z-20">
+      <NavLink to="/" className={navLinkClasses} end>
+        <FaMapMarkedAlt size={22} />
+        <span className="text-xs mt-1">Map</span>
+      </NavLink>
+      <NavLink to="/routes" className={navLinkClasses}>
+        <FaRoute size={22} />
+        <span className="text-xs mt-1">Routes</span>
+      </NavLink>
+      <NavLink to="/contact" className={navLinkClasses}>
+        <FaInfoCircle size={22} />
+        <span className="text-xs mt-1">Contact</span>
+      </NavLink>
+    </nav>
+  );
+};
 
-      <div className="flex-1 overflow-y-auto">
-        <h2 className="text-lg font-semibold p-4 sticky top-0 bg-gray-800">
-          Active Buses ({buses.length})
-        </h2>
-        <ul>
-          {buses.map((bus) => (
-            <BusListItem key={bus.id} bus={bus} />
-          ))}
-        </ul>
-      </div>
+export default BottomNavBar;
+</file>
 
-      <footer className="p-4 text-center text-xs text-gray-500 border-t border-gray-700">
-        &copy; 2025 Bus Tracker Inc.
-      </footer>
+<file path="frontend/src/components/BusInfoPanel.jsx">
+import PropTypes from 'prop-types';
+import useBusStore from '../store/busStore';
+import BusListItem from './BusListItem';
+import { FaArrowLeft } from 'react-icons/fa';
+
+const BusInfoPanel = () => {
+  // --- CORREÇÃO: Usando seletores atômicos para estabilidade e performance ---
+  // Cada pedaço do estado é selecionado individualmente.
+  // Isso garante que o componente só re-renderize quando um desses valores específicos mudar.
+  const buses = useBusStore((state) => state.buses);
+  const selectedBusId = useBusStore((state) => state.selectedBusId);
+  const setSelectedBusId = useBusStore((state) => state.setSelectedBusId);
+  
+  // Agora 'buses' sempre será o array do estado, mesmo que esteja vazio.
+  const selectedBus = selectedBusId ? buses.find(bus => bus.id === selectedBusId) : null;
+
+  const handleClearSelection = () => {
+    setSelectedBusId(null);
+  };
+
+  const renderContent = () => {
+    if (selectedBus) {
+      return (
+        <div className="flex flex-col h-full">
+          <header className="flex items-center p-4 border-b border-gray-700 flex-shrink-0">
+            <button
+              onClick={handleClearSelection}
+              className="mr-4 p-2 rounded-full hover:bg-gray-600"
+              aria-label="Back to list"
+            >
+              <FaArrowLeft />
+            </button>
+            <h2 className="text-lg font-bold">Bus Details</h2>
+          </header>
+          <div className="flex-1 p-6 overflow-y-auto">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-400">License Plate</p>
+                <p className="text-2xl font-semibold">{selectedBus.license_plate}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400">Bus ID</p>
+                <p className="font-mono text-lg">{selectedBus.id}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400">Current Position</p>
+                <p className="font-mono text-lg">{`${selectedBus.lat.toFixed(6)}, ${selectedBus.lng.toFixed(6)}`}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col h-full">
+        <header className="flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0">
+            <div>
+                 <h1 className="text-xl font-bold">Active Buses</h1>
+                 <p className="text-sm text-gray-400">
+                    {buses.length > 0 ? `${buses.length} buses being tracked` : 'No active buses'}
+                </p>
+            </div>
+            <div className="w-10 h-1.5 bg-gray-600 rounded-full" />
+        </header>
+        <div className="flex-1 overflow-y-auto">
+          {buses.length > 0 ? (
+            <ul>
+              {buses.map((bus) => (
+                <BusListItem key={bus.id} bus={bus} />
+              ))}
+            </ul>
+          ) : (
+            <p className="p-8 text-center text-gray-400">Waiting for bus data...</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <aside className="absolute bottom-0 inset-x-0 mx-2 mb-20 h-[40vh] max-h-72 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-2xl z-10 overflow-hidden transition-transform duration-300 ease-in-out">
+      <div className="h-full">
+        {renderContent()}
+      </div>
     </aside>
   );
 };
 
-export default Sidebar;
+export default BusInfoPanel;
 </file>
 
-<file path="frontend/tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+<file path="frontend/src/pages/ContactPage.jsx">
+const ContactPage = () => {
+  return (
+    <div className="p-8 h-full flex items-center justify-center">
+      <h1 className="text-3xl font-bold text-gray-500">Contact Page</h1>
+       <p className="text-gray-600">Contact information will be displayed here.</p>
+    </div>
+  );
+};
+
+export default ContactPage;
+</file>
+
+<file path="frontend/src/pages/RoutesPage.jsx">
+const RoutesPage = () => {
+  return (
+    <div className="p-8 h-full flex items-center justify-center">
+      <h1 className="text-3xl font-bold text-gray-500">Routes Page</h1>
+      <p className="text-gray-600">Route management will be implemented here.</p>
+    </div>
+  );
+};
+
+export default RoutesPage;
 </file>
 
 <file path="frontend/.gitignore">
@@ -255,6 +308,15 @@ export default defineConfig([
 ])
 </file>
 
+<file path="frontend/postcss.config.js">
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
 <file path="frontend/public/vite.svg">
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
 </file>
@@ -272,6 +334,17 @@ Currently, two official plugins are available:
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+</file>
+
+<file path="frontend/src/apiClient.js">
+import axios from 'axios';
+
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8069', // From openapi.yaml
+  withCredentials: true, // Crucial for sending httpOnly session cookies
+});
+
+export default apiClient;
 </file>
 
 <file path="frontend/src/App.css">
@@ -323,6 +396,532 @@ If you are developing a production application, we recommend using TypeScript wi
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
 </file>
 
+<file path="frontend/src/components/AdminLayout.jsx">
+import { Outlet, Link, useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
+
+const AdminLayout = () => {
+    const { user, logout } = useAuthStore();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    }
+
+    return (
+        <div className="flex flex-col min-h-screen bg-gray-900">
+            <header className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+                <div className="text-xl font-bold">
+                    <Link to="/admin/buses">Operator Panel</Link>
+                </div>
+                <div className="flex items-center gap-4">
+                    <span className="text-gray-300">Welcome, {user?.username || 'Admin'}</span>
+                    <nav className="flex gap-4">
+                        <Link to="/" className="text-sm hover:text-blue-400">Go to Map</Link>
+                    </nav>
+                    <button onClick={handleLogout} className="px-3 py-1 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700">
+                        Logout
+                    </button>
+                </div>
+            </header>
+            <main className="flex-1">
+                <Outlet />
+            </main>
+        </div>
+    );
+};
+
+export default AdminLayout;
+</file>
+
+<file path="frontend/src/components/BusListItem.jsx">
+import PropTypes from 'prop-types';
+import useBusStore from '../store/busStore';
+
+const BusListItem = ({ bus }) => {
+  // Aplicando o mesmo padrão de seletor atômico
+  const selectedBusId = useBusStore((state) => state.selectedBusId);
+  const setSelectedBusId = useBusStore((state) => state.setSelectedBusId);
+  
+  const isSelected = bus.id === selectedBusId;
+
+  const handleClick = () => {
+    setSelectedBusId(isSelected ? null : bus.id);
+  };
+
+  return (
+    <li
+      className={`px-4 py-3 cursor-pointer transition-colors duration-200 ${
+        isSelected
+          ? 'bg-blue-500/30'
+          : 'hover:bg-gray-700/50'
+      }`}
+      onClick={handleClick}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+            <span className="font-semibold text-white">{bus.license_plate}</span>
+            <p className="text-xs text-gray-400">ID: {bus.id}</p>
+        </div>
+      </div>
+    </li>
+  );
+};
+
+BusListItem.propTypes = {
+    bus: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        license_plate: PropTypes.string.isRequired,
+    }).isRequired,
+};
+
+
+export default BusListItem;
+</file>
+
+<file path="frontend/src/components/BusMarker.jsx">
+import { FaBus } from 'react-icons/fa';
+
+const BusMarker = ({ isSelected }) => {
+  // We use Tailwind CSS classes to change the appearance based on the `isSelected` prop.
+  // This provides clear visual feedback to the user.
+  const baseClasses = "transition-all duration-200 ease-in-out transform";
+  const selectedClasses = "text-blue-500 scale-125";
+  const deselectedClasses = "text-gray-900";
+
+  return (
+    <div className="p-1 bg-white rounded-full shadow-lg">
+      <FaBus 
+        size={24}
+        className={`${baseClasses} ${isSelected ? selectedClasses : deselectedClasses}`}
+      />
+    </div>
+  );
+};
+
+export default BusMarker;
+</file>
+
+<file path="frontend/src/components/ProtectedRoute.jsx">
+import { Navigate, Outlet } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
+
+const ProtectedRoute = () => {
+  const { isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated) {
+    // Redirect them to the /login page, but save the current location they were
+    // trying to go to. This allows us to send them along to that page after they
+    // login, which is a nicer user experience.
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+};
+
+export default ProtectedRoute;
+</file>
+
+<file path="frontend/src/components/Sidebar.jsx">
+import useBusStore from '../store/busStore';
+import BusListItem from './BusListItem';
+
+const Sidebar = () => {
+  const buses = useBusStore((state) => state.buses);
+
+  return (
+    <aside className="w-80 flex-shrink-0 bg-gray-800 flex flex-col">
+      <header className="p-4 border-b border-gray-700">
+        <h1 className="text-xl font-bold">Bus Fleet Tracker</h1>
+        <p className="text-sm text-gray-400">Real-time monitoring</p>
+      </header>
+      
+      <div className="p-4">
+        <label htmlFor="route-select" className="block text-sm font-medium text-gray-300 mb-2">
+          Route
+        </label>
+        <select 
+          id="route-select" 
+          className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option>Route A</option>
+          <option>Route B</option>
+          {/* Outras rotas podem ser adicionadas aqui no futuro */}
+        </select>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <h2 className="text-lg font-semibold p-4 sticky top-0 bg-gray-800">
+          Active Buses ({buses.length})
+        </h2>
+        <ul>
+          {buses.map((bus) => (
+            <BusListItem key={bus.id} bus={bus} />
+          ))}
+        </ul>
+      </div>
+
+      <footer className="p-4 text-center text-xs text-gray-500 border-t border-gray-700">
+        &copy; 2025 Bus Tracker Inc.
+      </footer>
+    </aside>
+  );
+};
+
+export default Sidebar;
+</file>
+
+<file path="frontend/src/pages/admin/BusManagementPage.jsx">
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../../apiClient';
+import { useState } from 'react';
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import PropTypes from 'prop-types';
+
+// This could be its own component file, but is simple enough to be here for now.
+const BusForm = ({ bus, onSave, onCancel }) => {
+  const [licensePlate, setLicensePlate] = useState(bus ? bus.license_plate : '');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (licensePlate.trim()) {
+      onSave({ license_plate: licensePlate.trim() });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 mt-4 mb-6 bg-gray-700 rounded-lg">
+      <h3 className="mb-2 text-lg font-semibold">{bus ? 'Edit Bus' : 'Create New Bus'}</h3>
+      <div className="flex items-center gap-4">
+        <input
+          type="text"
+          value={licensePlate}
+          onChange={(e) => setLicensePlate(e.target.value)}
+          placeholder="e.g., BUS-123"
+          required
+          className="flex-grow px-3 py-2 text-white bg-gray-600 border border-gray-500 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        />
+        <div className="flex gap-2">
+          <button type="submit" className="px-4 py-2 font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700">
+            Save
+          </button>
+          <button type="button" onClick={onCancel} className="px-4 py-2 font-bold text-white bg-gray-500 rounded-md hover:bg-gray-600">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+BusForm.propTypes = {
+    bus: PropTypes.shape({
+        id: PropTypes.number,
+        license_plate: PropTypes.string,
+    }),
+    onSave: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
+};
+
+
+const BusManagementPage = () => {
+  const queryClient = useQueryClient();
+  const [editingBus, setEditingBus] = useState(null); // null, 'new', or a bus object
+  
+  // --- React Query Hooks ---
+
+  const { data: buses = [], isLoading, isError, error } = useQuery({
+    queryKey: ['adminBuses'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/admin/buses');
+      
+      // THE FIX IS HERE: The admin endpoint is also wrapping the array in a 'data' property,
+      // contrary to the OpenAPI spec. We now correctly access `response.data.data`.
+      if (response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      
+      // Fallback for if the API ever returns a direct array (to match the spec).
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      console.error("Unexpected API response structure for admin bus list.", response.data);
+      return [];
+    },
+    retry: (failureCount, error) => {
+      return error.response?.status !== 401 && failureCount < 3;
+    },
+  });
+
+  const createBusMutation = useMutation({
+    mutationFn: (newBus) => apiClient.post('/api/admin/buses', newBus),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBuses'] });
+      setEditingBus(null);
+    },
+  });
+
+  const updateBusMutation = useMutation({
+    mutationFn: (updatedBus) => apiClient.put(`/api/admin/buses/${updatedBus.id}`, { license_plate: updatedBus.license_plate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBuses'] });
+      setEditingBus(null);
+    },
+  });
+
+  const deleteBusMutation = useMutation({
+    mutationFn: (busId) => apiClient.delete(`/api/admin/buses/${busId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminBuses'] });
+    },
+  });
+
+
+  // --- Event Handlers ---
+
+  const handleSaveBus = (busData) => {
+    if (editingBus && editingBus.id) { // Editing existing bus
+      updateBusMutation.mutate({ ...busData, id: editingBus.id });
+    } else { // Creating new bus
+      createBusMutation.mutate(busData);
+    }
+  };
+
+  const handleDeleteBus = (busId) => {
+    if (window.confirm('Are you sure you want to delete this bus?')) {
+      deleteBusMutation.mutate(busId);
+    }
+  };
+
+
+  // --- Render Logic ---
+
+  if (isLoading) return <div className="p-8 text-center">Loading bus fleet...</div>;
+  if (isError) return <div className="p-8 text-center text-red-400">Error: {error.response?.data?.error?.description || error.message}</div>;
+
+  return (
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Bus Fleet Management</h1>
+        {editingBus === null && (
+           <button onClick={() => setEditingBus('new')} className="flex items-center gap-2 px-4 py-2 font-bold text-white bg-green-600 rounded-md hover:bg-green-700">
+            <FaPlus />
+            Add New Bus
+          </button>
+        )}
+      </div>
+
+      {(editingBus === 'new' || (editingBus && editingBus.id)) && (
+        <BusForm 
+          bus={editingBus !== 'new' ? editingBus : null}
+          onSave={handleSaveBus}
+          onCancel={() => setEditingBus(null)} 
+        />
+      )}
+
+      <div className="overflow-x-auto bg-gray-800 rounded-lg shadow">
+        <table className="min-w-full text-sm text-left text-gray-300">
+          <thead className="text-xs text-gray-100 uppercase bg-gray-700">
+            <tr>
+              <th scope="col" className="px-6 py-3">ID</th>
+              <th scope="col" className="px-6 py-3">License Plate</th>
+              <th scope="col" className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {buses.map((bus) => (
+              <tr key={bus.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                <td className="px-6 py-4">{bus.id}</td>
+                <td className="px-6 py-4 font-medium">{bus.license_plate}</td>
+                <td className="px-6 py-4 text-right">
+                  <button onClick={() => setEditingBus(bus)} className="mr-4 text-blue-400 hover:text-blue-300">
+                    <FaEdit size={16} />
+                  </button>
+                  <button onClick={() => handleDeleteBus(bus.id)} className="text-red-500 hover:text-red-400">
+                    <FaTrash size={16} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default BusManagementPage;
+</file>
+
+<file path="frontend/src/pages/LoginPage.jsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import useAuthStore from '../store/authStore';
+
+const LoginPage = () => {
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('password');
+  const { login, isLoading, error } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const success = await login(username, password);
+    if (success) {
+      navigate('/admin/buses'); // Redirect to admin panel on successful login
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-lg">
+        <div>
+          <h2 className="text-3xl font-extrabold text-center text-white">
+            Operator Panel Login
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4 rounded-md shadow-sm">
+            <div>
+              <label htmlFor="username" className="sr-only">Username</label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                required
+                className="relative block w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded-md appearance-none placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password-input" className="sr-only">Password</label>
+              <input
+                id="password-input"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="relative block w-full px-3 py-2 text-white bg-gray-700 border border-gray-600 rounded-md appearance-none placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-center text-red-400">{error}</p>}
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md group hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
+</file>
+
+<file path="frontend/src/pages/TrackerPage.jsx">
+import BusMap from '../components/BusMap';
+import useBusSocket from '../hooks/useBusSocket';
+import BusInfoPanel from '../components/BusInfoPanel';
+
+function TrackerPage() {
+  useBusSocket();
+
+  return (
+    // O TrackerPage agora assume que está dentro de um contêiner
+    <>
+      <BusMap />
+      <BusInfoPanel />
+    </>
+  );
+}
+
+export default TrackerPage;
+</file>
+
+<file path="frontend/src/store/authStore.js">
+import { create } from 'zustand';
+import apiClient from '../apiClient';
+
+const useAuthStore = create((set) => ({
+  user: null,
+  isAuthenticated: false,
+  error: null,
+  isLoading: false,
+
+  login: async (username, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await apiClient.post('/api/auth/login', { username, password });
+      set({ 
+        user: response.data.user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+      return true; // Indicate success
+    } catch (err) {
+      const errorMessage = err.response?.data?.error?.description || 'Login failed. Please check your credentials.';
+      set({ 
+        error: errorMessage, 
+        isAuthenticated: false, 
+        user: null, 
+        isLoading: false 
+      });
+      return false; // Indicate failure
+    }
+  },
+
+  logout: () => {
+    // In a session-based auth, we can't directly "destroy" the server session
+    // from the client. The best practice is to clear the client-side state
+    // and let the cookie expire on its own or have a `/logout` endpoint.
+    // For now, we'll just clear the client state.
+    set({ user: null, isAuthenticated: false, error: null });
+  },
+}));
+
+export default useAuthStore;
+</file>
+
+<file path="frontend/tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="frontend/vite.config.js">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+</file>
+
 <file path="frontend/src/components/BusMap.jsx">
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -331,12 +930,11 @@ import useBusStore from '../store/busStore';
 import BusMarker from './BusMarker';
 
 // --- Configuration ---
-const API_URL = 'http://localhost:8069/api/routes/1/buses';
-const REFETCH_INTERVAL_MS = 500;
+const API_URL = 'http://localhost:8069/api/routes/1/buses'; 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // --- Map Constants ---
-const MAP_CENTER = { lat: -23.55052, lng: -46.633308 }; // <- THE FIX IS HERE
+const MAP_CENTER = { lat: -23.55052, lng: -46.633308 };
 const MAP_ID = 'BUS_TRACKER_MAP';
 const MAP_OPTIONS = {
   center: MAP_CENTER,
@@ -369,10 +967,14 @@ const loadGoogleMapsScript = (callback) => {
 
 // --- The React Component ---
 const BusMap = () => {
-  const { buses, setBuses, selectedBusId, setSelectedBusId } = useBusStore();
+  // Aplicando o padrão de seletor atômico
+  const buses = useBusStore((state) => state.buses);
+  const setBuses = useBusStore((state) => state.setBuses);
+  const selectedBusId = useBusStore((state) => state.selectedBusId);
+  const setSelectedBusId = useBusStore((state) => state.setSelectedBusId);
+
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
-  // markersRef now stores { marker, root, node } for full control
   const markersRef = useRef(new Map());
   const infoWindowRef = useRef(null);
 
@@ -382,21 +984,27 @@ const BusMap = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Network response was not ok');
       const payload = await res.json();
-      return payload.data.map(bus => ({
-        id: bus.id,
-        license_plate: bus.license_plate,
-        lat: bus.current_lat,
-        lng: bus.current_lng,
-      }));
+      
+      if (payload && Array.isArray(payload.data)) {
+        return payload.data.map(bus => ({
+          id: bus.id,
+          license_plate: bus.license_plate,
+          lat: bus.current_lat,
+          lng: bus.current_lng,
+        }));
+      }
+
+      console.error("Unexpected API response structure for public bus route.", payload);
+      return [];
     },
-    refetchInterval: REFETCH_INTERVAL_MS,
   });
 
   useEffect(() => {
-    if (fetchedBuses) setBuses(fetchedBuses);
+    if (fetchedBuses) {
+      setBuses(fetchedBuses);
+    }
   }, [fetchedBuses, setBuses]);
 
-  // Effect for Initializing the Map
   useEffect(() => {
     loadGoogleMapsScript(() => {
       if (mapContainerRef.current && !mapRef.current) {
@@ -410,28 +1018,24 @@ const BusMap = () => {
     });
   }, [setSelectedBusId]);
 
-  // Effect for Syncing Markers with Bus Data
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !buses) return; 
 
     const currentBusIds = new Set(buses.map(bus => bus.id));
     
-    // 1. Remove markers for buses that are no longer active
     markersRef.current.forEach((markerData, busId) => {
       if (!currentBusIds.has(busId)) {
-        markerData.root.unmount(); // Clean up React component
-        markerData.marker.map = null; // Remove from map
+        markerData.root.unmount();
+        markerData.marker.map = null;
         markersRef.current.delete(busId);
       }
     });
 
-    // 2. Add or update markers for current buses
     buses.forEach((bus) => {
       const pos = { lat: bus.lat, lng: bus.lng };
       if (markersRef.current.has(bus.id)) {
         markersRef.current.get(bus.id).marker.position = pos;
       } else {
-        // Create a DOM node to host the React component
         const markerNode = document.createElement('div');
         const root = createRoot(markerNode);
         root.render(<BusMarker isSelected={false} />);
@@ -440,7 +1044,7 @@ const BusMap = () => {
           position: pos,
           map: mapRef.current,
           title: `Bus ${bus.license_plate}`,
-          content: markerNode, // Use the DOM node as content
+          content: markerNode,
         });
 
         marker.addListener('click', () => setSelectedBusId(bus.id));
@@ -449,14 +1053,12 @@ const BusMap = () => {
     });
   }, [buses, setSelectedBusId]);
 
-  // Effect for Handling Selection (Info Window and Marker Style)
   useEffect(() => {
-    // Update marker styles based on selection
     markersRef.current.forEach((markerData, busId) => {
       markerData.root.render(<BusMarker isSelected={busId === selectedBusId} />);
     });
     
-    if (!mapRef.current || !infoWindowRef.current) return;
+    if (!mapRef.current || !infoWindowRef.current || !buses) return;
     const selectedBus = buses.find(bus => bus.id === selectedBusId);
     
     if (selectedBus) {
@@ -481,33 +1083,72 @@ export default BusMap;
 </file>
 
 <file path="frontend/src/hooks/useBusSocket.js">
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import useBusStore from '../store/busStore';
 
-const useBusSocket = ({ setBuses, updateBusPosition }) => {
+const WEBSOCKET_URL = 'ws://localhost:8090';
+
+/**
+ * Custom hook to manage the WebSocket connection for real-time bus position updates.
+ * Delegates state update logic to the busStore via the `addOrUpdateBus` action.
+ */
+const useBusSocket = () => {
+  // Seleciona apenas a ação necessária do store.
+  // Esta referência é estável e não causará re-renderizações ou loops.
+  const addOrUpdateBus = useBusStore((state) => state.addOrUpdateBus);
+  const socketRef = useRef(null);
+
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8069');
+    if (socketRef.current) {
+      return;
+    }
+    
+    console.log('Attempting to connect to WebSocket server...');
+    const socket = new WebSocket(WEBSOCKET_URL);
+    socketRef.current = socket;
 
     socket.onopen = () => {
-      console.log('WebSocket connection established');
+      console.log('WebSocket connection established successfully.');
     };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'initial_positions') {
-        setBuses(data.payload);
-      } else if (data.type === 'position_update') {
-        updateBusPosition(data.payload);
+      try {
+        const data = JSON.parse(event.data);
+
+        // A lógica agora é muito mais simples aqui
+        if (data.type === 'position_update' && typeof data.payload === 'object' && data.payload !== null) {
+          // Apenas chamamos a ação do store, que sabe como lidar com a atualização.
+          addOrUpdateBus(data.payload);
+        } else {
+          console.warn('Received unknown message type or invalid payload:', data);
+        }
+      } catch (error) {
+        console.error('Failed to parse incoming WebSocket message:', error);
       }
     };
 
-    socket.onclose = () => {
-      console.log('WebSocket connection closed');
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    socket.onclose = (event) => {
+      if (event.wasClean) {
+        console.log(`WebSocket connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+      } else {
+        console.error('WebSocket connection died');
+      }
+      socketRef.current = null; 
     };
 
     return () => {
-      socket.close();
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        console.log('Closing WebSocket connection.');
+        socketRef.current.close();
+      }
+      socketRef.current = null;
     };
-  }, [setBuses, updateBusPosition]);
+    
+  }, [addOrUpdateBus]); // A dependência de 'addOrUpdateBus' também é estável.
 };
 
 export default useBusSocket;
@@ -529,22 +1170,42 @@ import { create } from 'zustand';
 
 const useBusStore = create((set) => ({
   buses: [],
-  selectedBusId: null, // ID do ônibus selecionado
-  setBuses: (buses) => set({ buses }),
+  selectedBusId: null,
+
+  setBuses: (initialBuses) => set({ buses: initialBuses }),
+
+  addOrUpdateBus: (busData) => set((state) => {
+    // --- CORREÇÃO ESTÁ AQUI ---
+    // Normaliza o objeto de dados recebido para corresponder à estrutura de estado interna da nossa aplicação.
+    // Independentemente da fonte, garantimos que sempre usamos 'lat' e 'lng'.
+    const normalizedBus = {
+      id: busData.id,
+      license_plate: busData.license_plate,
+      // Mapeia 'current_lat' para 'lat' e 'current_lng' para 'lng'.
+      // O operador '??' (nullish coalescing) serve como um fallback caso o objeto já venha com 'lat'.
+      lat: busData.current_lat ?? busData.lat,
+      lng: busData.current_lng ?? busData.lng,
+    };
+
+    // Agora, usamos o objeto normalizado para a lógica de atualização.
+    const busExists = state.buses.some(bus => bus.id === normalizedBus.id);
+
+    let updatedBuses;
+    if (busExists) {
+      updatedBuses = state.buses.map(bus =>
+        bus.id === normalizedBus.id ? { ...bus, ...normalizedBus } : bus
+      );
+    } else {
+      updatedBuses = [...state.buses, normalizedBus];
+    }
+    
+    return { buses: updatedBuses };
+  }),
+  
   setSelectedBusId: (id) => set({ selectedBusId: id }),
 }));
 
 export default useBusStore;
-</file>
-
-<file path="frontend/vite.config.js">
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
 </file>
 
 <file path="frontend/index.html">
@@ -577,9 +1238,12 @@ export default defineConfig({
   },
   "dependencies": {
     "@tanstack/react-query": "^5.85.5",
+    "axios": "^1.11.0",
+    "prop-types": "^15.8.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
+    "react-router-dom": "^7.8.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -600,18 +1264,59 @@ export default defineConfig({
 </file>
 
 <file path="frontend/src/App.jsx">
-import Sidebar from './components/Sidebar';
-import BusMap from './components/BusMap';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import AppShell from './components/AppShell'; // Novo layout principal
+import TrackerPage from './pages/TrackerPage';
+import RoutesPage from './pages/RoutesPage';   // Nova página
+import ContactPage from './pages/ContactPage'; // Nova página
+import LoginPage from './pages/LoginPage';
+import AdminLayout from './components/AdminLayout';
+import ProtectedRoute from './components/ProtectedRoute';
+import BusManagementPage from './pages/admin/BusManagementPage';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppShell />, // O AppShell agora é o layout das rotas principais
+    children: [
+      {
+        index: true, // Rota padrão (/) agora renderiza TrackerPage
+        element: <TrackerPage />,
+      },
+      {
+        path: 'routes',
+        element: <RoutesPage />,
+      },
+      {
+        path: 'contact',
+        element: <ContactPage />,
+      },
+    ]
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    path: '/admin',
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <Navigate to="buses" replace /> },
+          {
+            path: 'buses',
+            element: <BusManagementPage />
+          }
+        ]
+      }
+    ]
+  }
+]);
 
 function App() {
-  return (
-    <div className="flex h-screen font-sans">
-      <Sidebar />
-      <main className="flex-1">
-        <BusMap />
-      </main>
-    </div>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

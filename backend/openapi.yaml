@@ -3,15 +3,17 @@ info:
   title: Bus Tracker API
   description: |-
     The API for the real-time Bus Fleet Tracker application.
-    This specification covers both public-facing endpoints and protected administrative endpoints for the Operator Panel.
+    This specification covers public-facing endpoints, data ingestion endpoints, and protected administrative endpoints for the Operator Panel.
   version: 1.0.0
 servers:
-  - url: http://localhost:8000
+  - url: http://localhost:8069 # Corrected the default port to match your setup
     description: Local Development Server
 
 tags:
   - name: Public
     description: Endpoints accessible to everyone.
+  - name: Ingestion
+    description: Endpoints for buses/devices to report data.
   - name: Authentication
     description: Operations for user login and session management.
   - name: "Admin: Buses"
@@ -48,6 +50,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  # --- INGESTION ENDPOINTS ---
+  /api/buses/{id}/location:
+    post: # THE FIX IS HERE: Changed from PUT to POST
+      tags:
+        - Ingestion
+      summary: Update a bus's location
+      description: Endpoint for a bus/device to report its current GPS coordinates. Requires a valid API Key.
+      security:
+        - apiKeyAuth: [] # THE FIX IS HERE: This endpoint is now marked as protected.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The numeric ID of the bus reporting its location.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationPayload'
+      responses:
+        '200':
+          description: Location updated successfully. Returns the updated bus object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bus'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
   # --- AUTHENTICATION ENDPOINTS ---
   /api/auth/login:
@@ -118,11 +156,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Bus'
         '400':
-          description: Bad request, license_plate is missing or invalid.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
 
@@ -181,11 +215,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Bus'
         '400':
-          description: Bad request, license_plate is missing or invalid.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequestError'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
@@ -231,12 +261,17 @@ components:
           type: number
           format: float
           description: The current latitude of the bus.
-          example: -23.5505
+          example: -29.9875
         current_lng:
           type: number
           format: float
           description: The current longitude of the bus.
-          example: -46.6333
+          example: -50.1234
+        last_seen_at:
+          type: string
+          format: date-time
+          description: The UTC timestamp of when the bus last reported its location.
+          example: "2025-08-29T14:30:00Z"
       required:
         - id
         - license_plate
@@ -250,6 +285,23 @@ components:
           example: "BUS-NEW-01"
       required:
         - license_plate
+
+    LocationPayload:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: float
+          description: The latitude for the location update.
+          example: -29.9910
+        lng:
+          type: number
+          format: float
+          description: The longitude for the location update.
+          example: -50.1280
+      required:
+        - lat
+        - lng
 
     LoginRequest:
       type: object
@@ -297,13 +349,19 @@ components:
   # --- REUSABLE RESPONSES ---
   responses:
     UnauthorizedError:
-      description: Authentication failed. The client must be logged in.
+      description: Authentication failed. Either the client is not logged in (cookieAuth) or is missing/providing an invalid API Key (apiKeyAuth).
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     NotFoundError:
       description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: The request is malformed, missing required fields, or contains invalid data.
       content:
         application/json:
           schema:
@@ -315,3 +373,7 @@ components:
       type: apiKey
       in: cookie
       name: PHPSESSID
+    apiKeyAuth: # THE FIX IS HERE: Added the API Key definition
+      type: apiKey
+      in: header
+      name: X-API-Key
