@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: Bus Tracker API
+  description: |-
+    The API for the real-time Bus Fleet Tracker application.
+    This specification covers both public-facing endpoints and protected administrative endpoints for the Operator Panel.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local Development Server
+
+tags:
+  - name: Public
+    description: Endpoints accessible to everyone.
+  - name: Authentication
+    description: Operations for user login and session management.
+  - name: "Admin: Buses"
+    description: Protected CRUD operations for managing the bus fleet.
+
+paths:
+  # --- PUBLIC ENDPOINTS ---
+  /api/routes/{route_id}/buses:
+    get:
+      tags:
+        - Public
+      summary: Get moving buses for a specific route
+      description: Returns a list of all buses currently active on a given route, with their simulated real-time positions.
+      parameters:
+        - name: route_id
+          in: path
+          required: true
+          description: The ID of the route to fetch buses for.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: A list of buses with their current locations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bus'
+        '404':
+          description: The specified route was not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # --- AUTHENTICATION ENDPOINTS ---
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Log in to the Operator Panel
+      description: Authenticates a user and returns a session cookie (`PHPSESSID`) upon success. This cookie must be sent on subsequent requests to protected endpoints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccess'
+        '401':
+          description: Invalid username or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # --- ADMIN: BUS CRUD ENDPOINTS ---
+  /api/admin/buses:
+    get:
+      tags:
+        - "Admin: Buses"
+      summary: List all buses
+      description: Retrieves a complete list of all buses in the fleet. Requires authentication.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: A list of all buses.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bus'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - "Admin: Buses"
+      summary: Create a new bus
+      description: Adds a new bus to the fleet. Requires authentication.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusPayload'
+      responses:
+        '201':
+          description: The bus was created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bus'
+        '400':
+          description: Bad request, license_plate is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/admin/buses/{id}:
+    get:
+      tags:
+        - "Admin: Buses"
+      summary: Get a single bus by ID
+      description: Retrieves the details of a specific bus. Requires authentication.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The numeric ID of the bus to retrieve.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The requested bus details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bus'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - "Admin: Buses"
+      summary: Update a bus
+      description: Updates the details of an existing bus. Requires authentication.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The numeric ID of the bus to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusPayload'
+      responses:
+        '200':
+          description: The bus was updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bus'
+        '400':
+          description: Bad request, license_plate is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - "Admin: Buses"
+      summary: Delete a bus
+      description: Deletes a bus from the fleet. Requires authentication.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The numeric ID of the bus to delete.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: The bus was deleted successfully. No content is returned.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  # --- REUSABLE SCHEMAS ---
+  schemas:
+    Bus:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the bus.
+          example: 1
+        license_plate:
+          type: string
+          description: The license plate of the bus.
+          example: "BUS-001"
+        current_lat:
+          type: number
+          format: float
+          description: The current latitude of the bus.
+          example: -23.5505
+        current_lng:
+          type: number
+          format: float
+          description: The current longitude of the bus.
+          example: -46.6333
+      required:
+        - id
+        - license_plate
+    
+    BusPayload:
+      type: object
+      properties:
+        license_plate:
+          type: string
+          description: The license plate of the bus.
+          example: "BUS-NEW-01"
+      required:
+        - license_plate
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          format: password
+          example: "password"
+      required:
+        - username
+        - password
+
+    LoginSuccess:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login successful"
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            username:
+              type: string
+              example: "admin"
+    
+    Error:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+            description:
+              type: string
+
+  # --- REUSABLE RESPONSES ---
+  responses:
+    UnauthorizedError:
+      description: Authentication failed. The client must be logged in.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFoundError:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            
+  # --- SECURITY SCHEMES ---
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID

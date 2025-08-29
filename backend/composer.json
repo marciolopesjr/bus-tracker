@@ -24,8 +24,11 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
+        "cboden/ratchet": "^0.4.4",
         "monolog/monolog": "^2.8",
         "php-di/php-di": "^6.4",
+        "react/event-loop": "^1.5",
+        "react/socket": "^1.16",
         "slim/psr7": "^1.5",
         "slim/slim": "^4.10"
     },
@@ -55,7 +58,7 @@
         }
     },
     "scripts": {
-        "start": "php -S localhost:8080 -t public",
+        "start": "php -S localhost:8069 -t public",
         "test": "phpunit"
     }
 }
